@@ -115,8 +115,9 @@ export default function Demo({}: Props) {
           )}
         </AnimatePresence>
         {!messageSent && (
-          <div className="z-10 flex h-fit w-[46.875rem] flex-col items-center justify-center space-y-4 pt-2">
-            <h1 className="text-5xl">What's on your mind?</h1>
+          <div className="z-10 flex h-fit w-[46.875rem] flex-col items-center justify-center space-y-2 pt-2">
+            <h1 className="text-9xl font-mono tracking-wide font-medium">SAFE</h1>
+            <h1 className="text-4xl tracking-wide">What's on your mind?</h1>
             <Input
               layoutId="input"
               textareaRef={textareaRef}
