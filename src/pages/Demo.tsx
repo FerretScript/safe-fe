@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import Input from "~/components/input";
 import { BackgroundBeams } from "~/components/ui/background-beams";
-import Row from "../components/row";
 import Graph, { ChartJSON } from "../components/graph";
 
 type Props = {};
@@ -81,13 +80,12 @@ export default function Demo({}: Props) {
           style={{ marginBottom: `calc(${textareaHeight + 70}px )` }}
         >
           {/* Example for things generated per message */}
-          <Row>
-            <Graph json={chatbotOutput} />
-          </Row>
-          <Row>
+          <div className="mx-2 grid h-full w-full grid-cols-4 grid-rows-4 gap-2">
             <Graph json={chatbotOutput} />
             <Graph json={chatbotOutput} />
-          </Row>
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+          </div>
         </div>
       )}
 

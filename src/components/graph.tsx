@@ -57,18 +57,19 @@ export default function ChartComp({ json, className }: Props) {
   };
 
   const variants = {
-    middle: { gridColumn: "span 2 / span 2" },
+    middle: {
+      transition: { duration: 0.5 },
+      gridRow: "span 2 / span 2",
+    },
     final: {
-      gridColumn: "span 2 / span 2",
+      gridRow: "span 2 / span 2",
       opacity: 1,
-      transition: { duration: 2 },
-      y: 0,
     },
   };
 
   return (
     <motion.div
-      initial={{ gridColumn: "span 1 / span 1", opacity: 0 }}
+      initial={{ gridRow: "span 1 / span 1", opacity: 0 }}
       variants={variants}
       animate={isLoaded ? "final" : "middle"}
       className={cn(
@@ -77,6 +78,7 @@ export default function ChartComp({ json, className }: Props) {
       )}
       transition={{
         type: "spring",
+        delay: 0.5,
         stiffness: 260,
         damping: 20,
       }}
