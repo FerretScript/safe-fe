@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import Input from "~/components/input";
 import { BackgroundBeams } from "~/components/ui/background-beams";
@@ -29,14 +29,13 @@ export default function Demo({}: Props) {
   const [prompt, setPrompt] = useState("");
   const [messageSent, setMessageSent] = useState(false);
   const [messages, setMessages] = useState<string[]>([]); // New state for storing messages
-  const [textareaHeight, setTextareaHeight] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { scrollYProgress } = useScroll();
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-      setTextareaHeight(textareaRef.current.scrollHeight);
     }
   }, [prompt]);
 
@@ -51,69 +50,72 @@ export default function Demo({}: Props) {
   };
 
   return (
-    <>
+    <div
+      className={`flex h-full w-full justify-center ${messageSent ? "items-start pl-14" : "items-center"} pb-4`}
+    >
       <Topbar open={messageSent} />
-      <div
-        className={`flex min-h-screen w-full justify-center overflow-y-auto ${messageSent ? "items-start pl-14" : "items-center"} pb-4`}
-        style={{ height: `calc(100% + ${textareaHeight + 70}px )` }}
-      >
-        {/* Initial UI */}
-        <>
-          <AnimatePresence>
-            {!messageSent && (
-              <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <BackgroundBeams className="absolute z-0" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {!messageSent && (
-            <div className="z-10 flex h-fit w-[46.875rem] flex-col items-center justify-center space-y-4 pt-2">
-              <h1 className="text-5xl">What's on your mind?</h1>
-              <Input
-                layoutId="input"
-                textareaRef={textareaRef}
-                prompt={prompt}
-                setPrompt={setPrompt}
-                handleSendPrompt={handleSendPrompt}
-              />
-            </div>
-          )}
-        </>
-        {/* Content body */}
-        {messageSent && (
-          <div
-            className="flex h-full w-full flex-col items-center justify-start space-y-4 px-4 pt-4"
-            style={{ marginBottom: `calc(${textareaHeight + 100}px )` }}
-          >
-            {/* Example for things generated per message */}
-            <div className="mx-2 grid h-full min-h-screen w-full grid-cols-4 grid-rows-4 gap-2">
-              <Graph json={chatbotOutput} />
-              <Graph json={chatbotOutput} />
-              <Graph json={chatbotOutput} />
-              <Graph json={chatbotOutput} />
-            </div>
-            <Separator />
 
-            {/* Render all messages */}
-            {messages.map((message, index) => (
-              <ChatMessage key={index} message={message} />
-            ))}
-          </div>
-        )}
-        {/* Input */}
+      {/* Initial UI */}
+      <>
         <AnimatePresence>
-          {messageSent && (
+          {!messageSent && (
+            <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <BackgroundBeams className="absolute z-0" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {!messageSent && (
+          <div className="z-10 flex h-fit w-[46.875rem] flex-col items-center justify-center space-y-4 pt-2">
+            <h1 className="text-5xl">What's on your mind?</h1>
             <Input
               layoutId="input"
               textareaRef={textareaRef}
               prompt={prompt}
               setPrompt={setPrompt}
               handleSendPrompt={handleSendPrompt}
-              className="fixed bottom-4"
             />
-          )}
-        </AnimatePresence>
-      </div>
-    </>
+          </div>
+        )}
+      </>
+      {/* Content body */}
+      {messageSent && (
+        <div className="flex min-h-screen pb-36 w-full flex-grow flex-col items-center justify-start space-y-2 overflow-y-auto overflow-x-hidden px-4 pt-4">
+          {/* Example for things generated per message */}
+          <div className="h-sc mx-2 grid h-screen w-full grid-cols-4 grid-rows-4 gap-2">
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+            <Separator />
+          </div>
+          <div className="h-sc mx-2 grid h-screen w-full grid-cols-4 grid-rows-4 gap-2">
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+            <Separator />
+          </div>
+
+          {/* Render all messages */}
+          {messages.map((message, index) => (
+            <ChatMessage key={index} message={message} />
+          ))}
+        </div>
+      )}
+      {/* Input */}
+      <AnimatePresence>
+        {messageSent && (
+          <Input
+            scroll={scrollYProgress}
+            layoutId="input"
+            textareaRef={textareaRef}
+            prompt={prompt}
+            setPrompt={setPrompt}
+            handleSendPrompt={handleSendPrompt}
+            className="fixed bottom-4"
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
