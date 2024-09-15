@@ -1,15 +1,18 @@
-import { MotionProps, motion } from "framer-motion";
+import { HTMLMotionProps, motion } from "framer-motion";
 import { Paperclip, Send } from "lucide-react";
 import { RefObject, useState } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { cn } from "~/lib/utils";
 
 
-interface InputProps extends MotionProps {
+
+interface InputProps extends HTMLMotionProps<"div"> {
   textareaRef: RefObject<HTMLTextAreaElement>;
   prompt: string;
   setPrompt: (value: string) => void;
   handleSendPrompt: () => void;
+  className?: string;
 }
 
 export default function Input({
@@ -17,6 +20,7 @@ export default function Input({
   prompt,
   setPrompt,
   handleSendPrompt,
+  className,
   ...props
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -27,15 +31,18 @@ export default function Input({
   return (
     <motion.div
       {...props}
-      className={`flex bg-background min-h-[3.75rem] w-full max-w-[46.875rem] flex-col items-center justify-center rounded-lg border px-2 pb-2 pt-2 text-sm shadow-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ${
-        isFocused
-          ? "border-ring ring-1 ring-ring ring-offset-background"
-          : "border-input"
-      }`}
+      className={cn(
+        `flex w-full max-w-[46.875rem] flex-col items-center justify-center rounded-lg border bg-background px-2 pb-2 pt-2 text-sm shadow-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ${
+          isFocused
+            ? "border-ring ring-1 ring-ring ring-offset-background"
+            : "border-input"
+        }`,
+        className,
+      )}
     >
       <Textarea
         ref={textareaRef}
-        className="h-24  max-h-[15.625rem] w-full overflow-y-auto border-0 outline-none ring-0 ring-offset-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="h-24 max-h-[15.625rem] w-full overflow-y-auto border-0 outline-none ring-0 ring-offset-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         placeholder="Write your prompt here"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
