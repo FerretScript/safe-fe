@@ -2,33 +2,61 @@ import { AnimatePresence, motion, useScroll } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import Input from "~/components/input";
 import { BackgroundBeams } from "~/components/ui/background-beams";
-import Graph, { ChartJSON } from "../components/graph";
+import Graph, { ChartJSON } from "../components/chart";
 import ChatMessage from "../components/chat-message";
 import { Separator } from "~/components/ui/separator";
 import Topbar from "~/components/topbar";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "~/hooks/use-toast";
+import { postChart, postConversation } from "~/api/functions";
+import AIPrompt from "~/components/ai-prompt";
+import { processChartResponses } from "~/lib/utils";
+
+type PageGen = {
+  type: "message" | "chart";
+  data: string | ChartJSON;
+  isUser: boolean;
+};
 
 type Props = {};
 
-const chatbotOutput: ChartJSON = {
-  dates: ["2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04"],
-  series: [
-    {
-      label: "Temperature",
-      type: "line",
-      values: [1, 2, 3, 5],
-    },
-    {
-      label: "Humidity",
-      type: "line",
-      values: [500, 55, 52, 80],
-    },
-  ],
-};
-
 export default function Demo({}: Props) {
+  const { toast } = useToast();
+
+  const chartMutation = useMutation({
+    mutationFn: postChart,
+    onSuccess: () => {
+      toast({
+        title: "Chart enviada",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error al enviar chart",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: postConversation,
+    onSuccess: () => {
+      toast({
+        title: "Mensaje enviado",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error al enviar mensaje",
+        variant: "destructive",
+      });
+    },
+  });
+
   const [prompt, setPrompt] = useState("");
+  const [pageGens, setPageGens] = useState<PageGen[]>([]);
   const [messageSent, setMessageSent] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]); // New state for storing messages
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { scrollYProgress } = useScroll();
 
@@ -39,13 +67,35 @@ export default function Demo({}: Props) {
     }
   }, [prompt]);
 
-  const handleSendPrompt = () => {
+  const handleSend = async () => {
     if (prompt.trim() === "") return;
     setMessageSent(true);
-    // Add new message to messages state
-    setMessages((prevMessages) => [...prevMessages, prompt]);
-    // Send message to backend here
-    // Clear the prompt after sending
+
+    // Add user message to pageGens
+    setPageGens((prev) => [
+      ...prev,
+      { type: "message", data: prompt, isUser: true },
+    ]);
+
+    const res = await mutation.mutateAsync({
+      query: prompt,
+    });
+
+    const { charts, message } = res;
+
+    processChartResponses(charts, chartMutation, setPageGens);
+
+    if (message) {
+      setPageGens((prev) => [
+        ...prev,
+        {
+          type: "message",
+          data: message,
+          isUser: false,
+        },
+      ]);
+    }
+
     setPrompt("");
   };
 
@@ -72,36 +122,55 @@ export default function Demo({}: Props) {
               textareaRef={textareaRef}
               prompt={prompt}
               setPrompt={setPrompt}
-              handleSendPrompt={handleSendPrompt}
+              handleSendPrompt={handleSend}
             />
           </div>
         )}
       </>
+
       {/* Content body */}
       {messageSent && (
-        <div className="flex min-h-screen pb-36 w-full flex-grow flex-col items-center justify-start space-y-2 overflow-y-auto overflow-x-hidden px-4 pt-4">
-          {/* Example for things generated per message */}
-          <div className="h-sc mx-2 grid h-screen w-full grid-cols-4 grid-rows-4 gap-2">
-            <Graph json={chatbotOutput} />
-            <Graph json={chatbotOutput} />
-            <Graph json={chatbotOutput} />
-            <Graph json={chatbotOutput} />
-            <Separator />
-          </div>
-          <div className="h-sc mx-2 grid h-screen w-full grid-cols-4 grid-rows-4 gap-2">
-            <Graph json={chatbotOutput} />
-            <Graph json={chatbotOutput} />
-            <Graph json={chatbotOutput} />
-            <Graph json={chatbotOutput} />
-            <Separator />
-          </div>
+        <div className="flex min-h-screen w-full flex-grow flex-col items-center justify-start space-y-2 overflow-y-auto overflow-x-hidden px-4 pb-36 pt-4">
+          {pageGens.map((gen, index) => {
+            if (gen.type === "message") {
+              return gen.isUser ? (
+                <ChatMessage key={index} message={gen.data as string} />
+              ) : (
+                <AIPrompt key={index} message={gen.data as string} />
+              );
+            } else if (gen.type === "chart" || gen.type === "message") {
+              const components = pageGens.filter(
+                (g) => g.type === "chart" || g.type === "message",
+              );
+              const isOnlyComponent = components.length === 1;
 
-          {/* Render all messages */}
-          {messages.map((message, index) => (
-            <ChatMessage key={index} message={message} />
-          ))}
+              return (
+                <div
+                  key={index}
+                  className={`mx-2 grid gap-2 ${
+                    isOnlyComponent
+                      ? "h-screen w-full place-items-center"
+                      : "h-sc h-screen w-full grid-cols-4 grid-rows-4"
+                  }`}
+                >
+                  {gen.type === "chart" ? (
+                    <Graph json={gen.data as ChartJSON} />
+                  ) : (
+                    <AIPrompt message={gen.data as string} />
+                  )}
+                  {!isOnlyComponent && index < components.length - 1 && (
+                    <Separator />
+                  )}
+                </div>
+              );
+            }
+          })}
+          {chartMutation.isPending && (
+            <div className="h-[400px] w-[750px] animate-pulse rounded-lg bg-muted"></div>
+          )}
         </div>
       )}
+
       {/* Input */}
       <AnimatePresence>
         {messageSent && (
@@ -111,7 +180,7 @@ export default function Demo({}: Props) {
             textareaRef={textareaRef}
             prompt={prompt}
             setPrompt={setPrompt}
-            handleSendPrompt={handleSendPrompt}
+            handleSendPrompt={handleSend}
             className="fixed bottom-4"
           />
         )}

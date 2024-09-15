@@ -102,3 +102,13 @@ export default function ChartComp({ json, className }: Props) {
     </motion.div>
   );
 }
+
+export function ChartSkeleton() {
+  return (
+    <div className="col-span-2 flex h-auto w-full rounded-lg border p-4">
+      <div className="flex h-full w-full items-center justify-center rounded-lg shadow-md">
+        <div className="animate-pulse h-[90%] w-[90%] bg-background" />
+      </div>
+    </div>
+  );
+}

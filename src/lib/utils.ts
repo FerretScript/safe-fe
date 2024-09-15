@@ -1,6 +1,9 @@
+import { UseMutationResult } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ChartJSON } from "~/components/graph";
+import { ChartJSON } from "~/components/chart";
+import { toast } from "~/hooks/use-toast";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -67,3 +70,80 @@ export const normalizeRadius = (value: number) => {
 
   return minRadius + normalizedValue * (maxRadius - minRadius);
 };
+
+export function extractChartBlocks(query: string) {
+  const regex = /```\{graph\}([\s\S]*?)```/g;
+  const charts: string[] = [];
+  let match;
+  let lastIndex = 0;
+  let message = "";
+
+  while ((match = regex.exec(query)) !== null) {
+    const chartMessage = match[1].trim();
+    charts.push(chartMessage);
+
+    // Add the text between the last match and this match to restOfMessage
+    message += message.slice(lastIndex, match.index);
+    lastIndex = regex.lastIndex;
+  }
+
+  // Add any remaining text after the last match
+  message += message.slice(lastIndex);
+
+  // Trim the message to remove any leading/trailing whitespace
+  message = message.trim();
+
+  return { charts, message: message };
+}
+
+function isValidChartJSON(data: any): data is ChartJSON {
+  return data && Array.isArray(data.dates) && Array.isArray(data.series);
+}
+
+export async function processChartResponses(
+  charts: string[],
+  chartMutation: UseMutationResult<
+    AxiosResponse<ChartJSON, any>,
+    Error,
+    {
+      query: string;
+    },
+    unknown
+  >,
+  setPageGens: React.Dispatch<React.SetStateAction<any[]>>,
+) {
+  const chartsRes: ChartJSON[] = [];
+
+  if (charts.length === 0) return;
+
+  try {
+    for (const chart of charts) {
+      const chartRes = await chartMutation.mutateAsync({ query: chart });
+      if (isValidChartJSON(chartRes.data)) {
+        chartsRes.push(chartRes.data);
+      } else {
+        console.error("Invalid chart data structure:", chartRes.data);
+        throw new Error("Invalid chart data structure");
+      }
+    }
+
+    chartsRes.forEach((parsedChartData) => {
+      setPageGens((prev) => [
+        ...prev,
+        {
+          type: "chart",
+          data: parsedChartData,
+          isUser: false,
+        },
+      ]);
+    });
+  } catch (error) {
+    console.error("Error processing chart data:", error);
+    toast({
+      title: "Error processing chart data",
+      description:
+        error instanceof Error ? error.message : "An unknown error occurred",
+      variant: "destructive",
+    });
+  }
+}
