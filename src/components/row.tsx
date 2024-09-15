@@ -7,6 +7,13 @@ interface Props extends PropsWithChildren {
 
 export default function Row({ children, className }: Props) {
   return (
-    <div className={cn("grid grid-cols-2 grid-rows-1 h-full max-h-[45%] w-full", className)}>{children}</div>
+    <div
+      className={cn(
+        "mx-2 grid h-full w-full grid-cols-4 grid-rows-1 gap-2",
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }

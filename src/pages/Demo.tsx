@@ -12,12 +12,12 @@ const chatbotOutput: ChartJSON = {
   series: [
     {
       label: "Temperature",
-      type: "bubble",
+      type: "line",
       values: [1, 2, 3, 5],
     },
     {
       label: "Humidity",
-      type: "bubble",
+      type: "line",
       values: [500, 55, 52, 80],
     },
   ],
@@ -82,7 +82,11 @@ export default function Demo({}: Props) {
         >
           {/* Example for things generated per message */}
           <Row>
-            <Graph className="col-span-1" json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
+          </Row>
+          <Row>
+            <Graph json={chatbotOutput} />
+            <Graph json={chatbotOutput} />
           </Row>
         </div>
       )}
