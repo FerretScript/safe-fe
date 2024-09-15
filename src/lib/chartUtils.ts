@@ -64,10 +64,8 @@ export default function generateChartConfig({
   series,
   datums = 10,
   count = 1,
-  resizable = true,
-  canRandomize = true,
+  resizable = false,
   dataType = "time",
-  elementType = "line",
   primaryAxisType = "time",
   secondaryAxisType = "linear",
   primaryAxisPosition = "bottom",
@@ -76,17 +74,16 @@ export default function generateChartConfig({
   secondaryAxisStack = true,
   primaryAxisShow = true,
   secondaryAxisShow = true,
-  tooltipAnchor = "closest",
+  tooltipAnchor = "pointer",
   tooltipAlign = "auto",
   interactionMode = "primary",
-  tooltipGroupingMode = "primary",
+  tooltipGroupingMode = "single",
   snapCursor = true,
 }: {
   series: number;
   datums?: number;
   count?: number;
   resizable?: boolean;
-  canRandomize?: boolean;
   dataType?: DataType;
   elementType?: ElementType;
   primaryAxisType?: PrimaryAxisType;
@@ -108,9 +105,7 @@ export default function generateChartConfig({
     datums,
     count,
     resizable,
-    canRandomize,
     dataType,
-    elementType,
     primaryAxisType,
     secondaryAxisType,
     primaryAxisPosition,

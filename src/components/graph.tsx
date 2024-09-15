@@ -1,13 +1,13 @@
-import { cn, processChartData } from "~/lib/utils";
+import { cn, normalizeRadius, processChartData } from "~/lib/utils";
 import { AxisOptions, Chart } from "react-charts";
 import { useMemo } from "react";
-import generateChartConfig, { ChartData } from "~/lib/chartUtils";
+import { ChartData } from "~/lib/chartUtils";
 
 export type ChartJSON = {
   dates: string[];
   series: {
     label: string;
-    type: string;
+    type: "line" | "area" | "bar" | "bubble" | undefined;
     values: number[];
   }[];
 };
@@ -25,7 +25,6 @@ export type DatumType = {
 
 export default function ChartComp({ json, className }: Props) {
   const processedData: ChartData = processChartData(json);
-  const config = generateChartConfig({ series: processedData.length, dataType: "time" });
 
   const secondaryGetters = processedData.map((data) => ({
     id: data.secondaryAxisId,
@@ -44,33 +43,27 @@ export default function ChartComp({ json, className }: Props) {
     AxisOptions<ChartData[number]["data"][number]>[]
   >(() => [...secondaryGetters], []);
 
-  // const secondaryAxes = useMemo<
-  //   AxisOptions<ChartData[number]["data"][number]>[]
-  // >(
-  //   () => [
-  //     {
-  //       getValue: (datum) => datum.secondary,
-  //       elementType: "bar",
-  //     },
-  //     {
-  //       id: 2,
-  //       getValue: (datum) => datum.secondary,
-  //       elementType: "line",
-  //     },
-  //   ],
-  //   [],
-  // );
-
   const options = {
     data: processedData,
-    ...config,
     primaryAxis,
     secondaryAxes,
   };
 
   return (
     <div className={cn("h-full w-full", className)}>
-      <Chart options={{ ...options, dark: true }} />
+      <Chart
+        options={{
+          ...options,
+          dark: true,
+          interactionMode: "closest",
+          //@ts-expect-error - this entire API is bullshit
+          getDatumStyle: (datum) => ({
+            circle: {
+              r: normalizeRadius(datum.originalDatum.radius ?? 0),
+            },
+          }),
+        }}
+      />
     </div>
   );
 }

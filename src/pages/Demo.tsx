@@ -12,13 +12,13 @@ const chatbotOutput: ChartJSON = {
   series: [
     {
       label: "Temperature",
-      type: "bar",
-      values: [20, 22, 21, 30],
+      type: "bubble",
+      values: [1, 2, 3, 5],
     },
     {
       label: "Humidity",
-      type: "line",
-      values: [50, 55, 52, 80],
+      type: "bubble",
+      values: [500, 55, 52, 80],
     },
   ],
 };
