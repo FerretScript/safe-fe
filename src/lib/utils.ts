@@ -82,22 +82,18 @@ export function extractChartBlocks(query: string) {
     const chartMessage = match[1].trim();
     charts.push(chartMessage);
 
-    // Add the text between the last match and this match to restOfMessage
-    message += message.slice(lastIndex, match.index);
+    // Add the text between the last match and this match to message
+    message += query.slice(lastIndex, match.index);
     lastIndex = regex.lastIndex;
   }
 
   // Add any remaining text after the last match
-  message += message.slice(lastIndex);
+  message += query.slice(lastIndex);
 
   // Trim the message to remove any leading/trailing whitespace
   message = message.trim();
 
-  return { charts, message: message };
-}
-
-function isValidChartJSON(data: any): data is ChartJSON {
-  return data && Array.isArray(data.dates) && Array.isArray(data.series);
+  return { charts, message };
 }
 
 export async function processChartResponses(
@@ -119,12 +115,7 @@ export async function processChartResponses(
   try {
     for (const chart of charts) {
       const chartRes = await chartMutation.mutateAsync({ query: chart });
-      if (isValidChartJSON(chartRes.data)) {
-        chartsRes.push(chartRes.data);
-      } else {
-        console.error("Invalid chart data structure:", chartRes.data);
-        throw new Error("Invalid chart data structure");
-      }
+      chartsRes.push(chartRes.data);
     }
 
     chartsRes.forEach((parsedChartData) => {

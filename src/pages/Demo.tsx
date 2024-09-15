@@ -1,21 +1,18 @@
 import { AnimatePresence, motion, useScroll } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Input from "~/components/input";
 import { BackgroundBeams } from "~/components/ui/background-beams";
-import Graph, { ChartJSON } from "../components/chart";
-import ChatMessage from "../components/chat-message";
-import { Separator } from "~/components/ui/separator";
+import { ChartJSON } from "../components/chart";
 import Topbar from "~/components/topbar";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "~/hooks/use-toast";
 import { postChart, postConversation } from "~/api/functions";
-import AIPrompt from "~/components/ai-prompt";
 import { processChartResponses } from "~/lib/utils";
+import AlternatingLayout from "../components/alternating-layout";
 
-type PageGen = {
-  type: "message" | "chart";
+export type PageGen = {
+  type: "message" | "chart" | "ai-prompt";
   data: string | ChartJSON;
-  isUser: boolean;
 };
 
 type Props = {};
@@ -55,7 +52,7 @@ export default function Demo({}: Props) {
 
   const [prompt, setPrompt] = useState("");
   const [pageGens, setPageGens] = useState<PageGen[]>([]);
-  const [messageSent, setMessageSent] = useState(false);
+  const [messageisSent, setMessageisSent] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { scrollYProgress } = useScroll();
@@ -69,55 +66,95 @@ export default function Demo({}: Props) {
 
   const handleSend = async () => {
     if (prompt.trim() === "") return;
-    setMessageSent(true);
+    setMessageisSent(true);
+
+    setPrompt("");
 
     // Add user message to pageGens
-    setPageGens((prev) => [
-      ...prev,
-      { type: "message", data: prompt, isUser: true },
-    ]);
+    setPageGens((prev) => [...prev, { type: "message", data: prompt }]);
 
     const res = await mutation.mutateAsync({
       query: prompt,
     });
 
-    const { charts, message } = res;
+    const { charts, message: aipropmt } = res;
+
+    console.log("AI prompt", aipropmt);
 
     processChartResponses(charts, chartMutation, setPageGens);
 
-    if (message) {
+    if (aipropmt) {
       setPageGens((prev) => [
         ...prev,
         {
-          type: "message",
-          data: message,
-          isUser: false,
+          type: "ai-prompt",
+          data: aipropmt,
         },
       ]);
     }
+  };
 
-    setPrompt("");
+  const handleShortcut = useCallback(
+    (e: KeyboardEvent) => {
+      if (!e.shiftKey && e.key === "Enter") {
+        e.preventDefault();
+        handleSend();
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleSend],
+  );
+
+  useEffect(() => {
+    const ref = textareaRef.current;
+    if (ref) {
+      ref.addEventListener("keydown", handleShortcut);
+    }
+    return () => {
+      if (ref) {
+        ref.removeEventListener("keydown", handleShortcut);
+      }
+    };
+  }, [handleShortcut]);
+
+  const groupPageGens = (pageGens: PageGen[]) => {
+    return pageGens.reduce<PageGen[][]>((acc, gen) => {
+      if (gen.type === "message") {
+        acc.push([gen]);
+      } else {
+        if (acc.length === 0 || acc[acc.length - 1][0].type === "message") {
+          acc.push([gen]);
+        } else {
+          acc[acc.length - 1].push(gen);
+        }
+      }
+      return acc;
+    }, []);
   };
 
   return (
     <div
-      className={`flex h-full w-full justify-center ${messageSent ? "items-start pl-14" : "items-center"} pb-4`}
+      className={`flex h-full w-full justify-center ${messageisSent ? "items-start pl-14" : "items-center"} pb-4`}
     >
-      <Topbar open={messageSent} />
+      <Topbar open={messageisSent} />
 
       {/* Initial UI */}
       <>
         <AnimatePresence>
-          {!messageSent && (
+          {!messageisSent && (
             <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <BackgroundBeams className="absolute z-0" />
             </motion.div>
           )}
         </AnimatePresence>
-        {!messageSent && (
+        {!messageisSent && (
           <div className="z-10 flex h-fit w-[46.875rem] flex-col items-center justify-center space-y-2 pt-2">
-            <h1 className="text-9xl font-mono tracking-wide font-medium">SAFE</h1>
-            <h1 className="text-4xl tracking-wide">What's on your mind?</h1>
+            <h1 className="font-mono text-9xl font-medium tracking-wide">
+              S4FE
+            </h1>
+            <h2 className="mb-2 text-4xl tracking-wide">
+              What's on your mind?
+            </h2>
             <Input
               layoutId="input"
               textareaRef={textareaRef}
@@ -130,51 +167,17 @@ export default function Demo({}: Props) {
       </>
 
       {/* Content body */}
-      {messageSent && (
-        <div className="flex min-h-screen w-full flex-grow flex-col items-center justify-start space-y-2 overflow-y-auto overflow-x-hidden px-4 pb-36 pt-4">
-          {pageGens.map((gen, index) => {
-            if (gen.type === "message") {
-              return gen.isUser ? (
-                <ChatMessage key={index} message={gen.data as string} />
-              ) : (
-                <AIPrompt key={index} message={gen.data as string} />
-              );
-            } else if (gen.type === "chart" || gen.type === "message") {
-              const components = pageGens.filter(
-                (g) => g.type === "chart" || g.type === "message",
-              );
-              const isOnlyComponent = components.length === 1;
-
-              return (
-                <div
-                  key={index}
-                  className={`mx-2 grid gap-2 ${
-                    isOnlyComponent
-                      ? "h-screen w-full place-items-center"
-                      : "h-sc h-screen w-full grid-cols-4 grid-rows-4"
-                  }`}
-                >
-                  {gen.type === "chart" ? (
-                    <Graph json={gen.data as ChartJSON} />
-                  ) : (
-                    <AIPrompt message={gen.data as string} />
-                  )}
-                  {!isOnlyComponent && index < components.length - 1 && (
-                    <Separator />
-                  )}
-                </div>
-              );
-            }
-          })}
-          {chartMutation.isPending && (
-            <div className="h-[400px] w-[750px] animate-pulse rounded-lg bg-muted"></div>
-          )}
-        </div>
-      )}
+      <AlternatingLayout
+        messageisSent={messageisSent}
+        groupPageGens={groupPageGens}
+        chartMutation={chartMutation}
+        mutation={mutation}
+        pageGens={pageGens}
+      />
 
       {/* Input */}
       <AnimatePresence>
-        {messageSent && (
+        {messageisSent && (
           <Input
             scroll={scrollYProgress}
             layoutId="input"

@@ -73,7 +73,7 @@ export default function ChartComp({ json, className }: Props) {
       variants={variants}
       animate={isLoaded ? "final" : "middle"}
       className={cn(
-        "col-span-2 flex h-auto w-full rounded-lg border p-4",
+        "col-span-3 flex h-auto w-full rounded-lg border p-4",
         className,
       )}
       transition={{
@@ -105,10 +105,6 @@ export default function ChartComp({ json, className }: Props) {
 
 export function ChartSkeleton() {
   return (
-    <div className="col-span-2 flex h-auto w-full rounded-lg border p-4">
-      <div className="flex h-full w-full items-center justify-center rounded-lg shadow-md">
-        <div className="animate-pulse h-[90%] w-[90%] bg-background" />
-      </div>
-    </div>
+    <div className="h-[400px] w-[750px] animate-pulse rounded-lg bg-muted"></div>
   );
 }
