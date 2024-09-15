@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Geist";
+  src:
+    url("../assets/fonts/geist/GeistVF.woff2") format("woff2-variations"),
+    url("../assets/fonts/geist/GeistVF.woff") format("woff-variations");
+  font-weight: 100 900;
+}
+
+@font-face {
+font-family: "GeistMono";
+  src:
+    url("../assets/fonts/mono/GeistMonoVF.woff2") format("woff2-variations"),
+    url("../assets/fonts/mono/GeistMonoVF.woff") format("woff-variations");
+  font-weight: 100 900;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
