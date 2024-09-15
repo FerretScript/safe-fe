@@ -42,7 +42,7 @@ export default function Input({
     >
       <Textarea
         ref={textareaRef}
-        className="h-24 max-h-[15.625rem] w-full overflow-y-auto border-0 outline-none ring-0 ring-offset-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="h-24 max-h-[250px] w-full overflow-y-auto border-0 outline-none ring-0 ring-offset-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         placeholder="Write your prompt here"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
