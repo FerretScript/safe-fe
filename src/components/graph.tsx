@@ -6,7 +6,7 @@ import generateChartConfig, { ChartData } from "~/lib/chartUtils";
 export type ChartJSON = {
   dates: string[];
   series: {
-    name: string;
+    label: string;
     type: string;
     values: number[];
   }[];

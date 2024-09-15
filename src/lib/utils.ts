@@ -24,8 +24,8 @@ export function convertPrimaryValue(
 
 export function processChartData(chatbotOutput: ChartJSON) {
   const chartData = chatbotOutput.series.map((series) => ({
-    label: series.name,
-    secondaryAxisId: series.name,
+    label: series.label,
+    secondaryAxisId: series.label,
     data: chatbotOutput.dates.map((date, index) => ({
       primary: new Date(date),
       secondary: series.values[index],

@@ -11,12 +11,12 @@ const chatbotOutput: ChartJSON = {
   dates: ["2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04"],
   series: [
     {
-      name: "Temperature",
+      label: "Temperature",
       type: "bar",
       values: [20, 22, 21, 30],
     },
     {
-      name: "Humidity",
+      label: "Humidity",
       type: "line",
       values: [50, 55, 52, 80],
     },
